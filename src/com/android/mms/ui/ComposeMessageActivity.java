@@ -2094,10 +2094,20 @@ public class ComposeMessageActivity extends Activity
     protected void onStop() {
         super.onStop();
 
+        // No need to do the querying when finished this activity
+        mBackgroundQueryHandler.cancelOperation(MESSAGE_LIST_QUERY_TOKEN);
+
         // Allow any blocked calls to update the thread's read status.
         mConversation.blockMarkAsRead(false);
 
         if (mMsgListAdapter != null) {
+            // Close the cursor in the ListAdapter if the activity stopped.
+            Cursor cursor = mMsgListAdapter.getCursor();
+
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
+
             mMsgListAdapter.changeCursor(null);
         }
 
@@ -3638,6 +3648,7 @@ public class ComposeMessageActivity extends Activity
                     mDataSetChangedListener = new MessageListAdapter.OnDataSetChangedListener() {
         public void onDataSetChanged(MessageListAdapter adapter) {
             mPossiblePendingNotification = true;
+            checkPendingNotification();
         }
 
         public void onContentChanged(MessageListAdapter adapter) {
